@@ -21,6 +21,11 @@ services:
       timeout: 5s
     depends_on:
       - backend
+    develop:
+      watch:
+        - path: ./frontend
+          action: sync+restart
+          target: /usr/share/nginx/html
 
   backend:
     image: openmrs/openmrs-reference-application-3-backend:${TAG:-qa}
