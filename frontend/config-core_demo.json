@@ -33,6 +33,9 @@
     "Brand color #3": "#0E3386"
   },
   "@openmrs/esm-patient-registration-app": {
+    "links": {
+      "submitButton": "${openmrsSpaBase}/post-registration/${patientUuid}"
+    },
     "fieldConfigurations": {
       "gender": [
         {
