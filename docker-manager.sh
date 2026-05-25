@@ -112,8 +112,39 @@ show_logs() {
 # Function to restart containers
 restart_containers() {
     print_header "Restarting Containers"
-    docker compose restart
-    print_success "Containers restarted successfully"
+    echo "Select service to restart:"
+    echo "1) All services"
+    echo "2) Gateway"
+    echo "3) Frontend"
+    echo "4) Backend"
+    echo "5) Database"
+    read -p "Enter choice (1-5): " restart_choice
+    
+    case $restart_choice in
+        1)
+            docker compose restart
+            print_success "All containers restarted successfully"
+            ;;
+        2)
+            docker compose restart gateway
+            print_success "Gateway container restarted successfully"
+            ;;
+        3)
+            docker compose restart frontend
+            print_success "Frontend container restarted successfully"
+            ;;
+        4)
+            docker compose restart backend
+            print_success "Backend container restarted successfully"
+            ;;
+        5)
+            docker compose restart db
+            print_success "Database container restarted successfully"
+            ;;
+        *)
+            print_error "Invalid choice"
+            ;;
+    esac
 }
 
 # Function to copy static assets without rebuilding
@@ -155,12 +186,66 @@ copy_static_assets() {
 # Function to rebuild with no cache
 rebuild_no_cache() {
     print_header "Rebuilding Containers (No Cache)"
-    docker compose build --no-cache
-    print_success "Containers rebuilt without cache"
+    echo "Select service to rebuild:"
+    echo "1) All services"
+    echo "2) Gateway"
+    echo "3) Frontend"
+    echo "4) Backend"
+    echo "5) Database"
+    read -p "Enter choice (1-5): " rebuild_choice
+    
+    case $rebuild_choice in
+        1)
+            docker compose build --no-cache
+            print_success "All containers rebuilt without cache"
+            ;;
+        2)
+            docker compose build --no-cache gateway
+            print_success "Gateway container rebuilt without cache"
+            ;;
+        3)
+            docker compose build --no-cache frontend
+            print_success "Frontend container rebuilt without cache"
+            ;;
+        4)
+            docker compose build --no-cache backend
+            print_success "Backend container rebuilt without cache"
+            ;;
+        5)
+            docker compose build --no-cache db
+            print_success "Database container rebuilt without cache"
+            ;;
+        *)
+            print_error "Invalid choice"
+            return
+            ;;
+    esac
+    
     read -p "Do you want to restart the containers? (y/n): " restart
     if [[ $restart == "y" || $restart == "Y" ]]; then
-        docker compose up -d
-        print_success "Containers restarted successfully"
+        if [[ $rebuild_choice == "1" ]]; then
+            docker compose up -d
+            print_success "All containers restarted successfully"
+        else
+            case $rebuild_choice in
+                2)
+                    docker compose up -d gateway
+                    print_success "Gateway container restarted successfully"
+                    ;;
+                3)
+                    docker compose up -d frontend
+                    print_success "Frontend container restarted successfully"
+                    ;;
+                4)
+                    docker compose up -d backend
+                    print_success "Backend container restarted successfully"
+                    ;;
+                5)
+                    docker compose up -d db
+                    print_success "Database container restarted successfully"
+                    ;;
+            esac
+        fi
     fi
 }
 
