@@ -4,9 +4,17 @@
     "showUpcomingAppointments": true,
     "extensionSlots": {
       "action-menu-patient-chart-items-slot": {
-        "order": ["order-basket-action-menu"]
+        "order": ["order-basket-action-menu", "lab-request-action-button"]
+      },
+      "patient-chart-summary-dashboard-slot": {
+        "add": ["lab-request-form-dashboard"]
       }
     }
+  },
+  "@clinicemr/esm-patient-lab-request-form-app": {
+    "labOrderEncounterTypeUuid": "67a71486-1a54-468f-ac3e-7091a9a79584",
+    "labOrderTypeUuid": "52a447d3-a64a-11e3-9aeb-50e549534c5e",
+    "careSettingUuid": "6f0c9a92-6f24-11e3-af88-005056821db0"
   },
   "@openmrs/esm-ward-app": {
     "extensionSlots": {
@@ -16,6 +24,38 @@
     }
   },
   "@openmrs/esm-styleguide": {
-    "Brand color #1": "#005d5d"
-  }
+    "Brand color #1": "#00008B",
+    "Brand color #2": "#0000FF",
+    "Brand color #3": "#0E3386"
+  },
+  "@openmrs/esm-patient-registration-app": {
+    "fieldConfigurations": {
+      "gender": [
+        {
+          "value": "male",
+          "label": "Male",
+          "display": "Male",
+          "name": "Male"
+        },
+        {
+          "value": "female",
+          "label": "Female",
+          "display": "Female",
+          "name": "Female"
+        }
+      ]
+    }
+  },
+  "@openmrs/esm-login-app": {
+      "logo": {
+        "src": "/openmrs/spa/logo.svg",
+        "alt": "ClinicEMR - Medical Records System"
+      }
+    },
+    "@openmrs/esm-primary-navigation-app": {
+      "logo": {
+        "src": "/openmrs/spa/logo-white.svg",
+        "name": "ClinicEMR"
+      }
+    }
 }
