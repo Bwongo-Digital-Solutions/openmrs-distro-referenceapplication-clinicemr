@@ -60,7 +60,15 @@
       },
       "background": {
         "image": "/openmrs/spa/background-image.png"
-      }
+      },
+      "footer": {
+      "additionalLogos": [
+        {
+          "src": "/openmrs/spa/bwongo.png",
+          "alt": "Bwongo Digital Solutions"
+        }
+      ]
+    }
     },
     "@openmrs/esm-primary-navigation-app": {
       "logo": {
