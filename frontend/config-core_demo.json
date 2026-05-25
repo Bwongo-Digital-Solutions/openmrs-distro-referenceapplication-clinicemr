@@ -50,6 +50,9 @@
       "logo": {
         "src": "/openmrs/spa/logo.svg",
         "alt": "ClinicEMR - Medical Records System"
+      },
+      "background": {
+        "image": "/openmrs/spa/background-image.png"
       }
     },
     "@openmrs/esm-primary-navigation-app": {
