@@ -40,5 +40,6 @@ COPY config-core_demo.json /usr/share/nginx/html
 COPY logo.svg /usr/share/nginx/html
 COPY logo-white.svg /usr/share/nginx/html
 COPY background-image.png /usr/share/nginx/html
+COPY bwongo.png /usr/share/nginx/html
 
 CMD ["/usr/local/bin/startup.sh"]
