@@ -34,21 +34,21 @@ print_warning() {
 # Function to build containers
 build_containers() {
     print_header "Building Containers"
-    docker-compose build
+    docker compose build
     print_success "Containers built successfully"
 }
 
 # Function to start containers
 start_containers() {
     print_header "Starting Containers"
-    docker-compose up -d
+    docker compose up -d
     print_success "Containers started successfully"
 }
 
 # Function to stop containers
 stop_containers() {
     print_header "Stopping Containers"
-    docker-compose stop
+    docker compose stop
     print_success "Containers stopped successfully"
 }
 
@@ -57,7 +57,7 @@ delete_containers() {
     print_header "Deleting Containers"
     read -p "Are you sure you want to delete all containers? (y/n): " confirm
     if [[ $confirm == "y" || $confirm == "Y" ]]; then
-        docker-compose down
+        docker compose down
         print_success "Containers deleted successfully"
     else
         print_warning "Operation cancelled"
@@ -112,7 +112,7 @@ show_logs() {
 # Function to restart containers
 restart_containers() {
     print_header "Restarting Containers"
-    docker-compose restart
+    docker compose restart
     print_success "Containers restarted successfully"
 }
 
@@ -129,7 +129,7 @@ copy_static_assets() {
     
     case $asset_choice in
         1)
-            container_name=$(docker-compose ps -q frontend | xargs docker inspect -f '{{.Name}}' | sed 's/\///')
+            container_name=$(docker compose ps -q frontend | xargs docker inspect -f '{{.Name}}' | sed 's/\///')
             if [ -n "$container_name" ]; then
                 docker cp "$source_path" "$container_name:$dest_path"
                 print_success "Assets copied to frontend container"
@@ -138,7 +138,7 @@ copy_static_assets() {
             fi
             ;;
         2)
-            container_name=$(docker-compose ps -q gateway | xargs docker inspect -f '{{.Name}}' | sed 's/\///')
+            container_name=$(docker compose ps -q gateway | xargs docker inspect -f '{{.Name}}' | sed 's/\///')
             if [ -n "$container_name" ]; then
                 docker cp "$source_path" "$container_name:$dest_path"
                 print_success "Assets copied to gateway container"
@@ -155,11 +155,11 @@ copy_static_assets() {
 # Function to rebuild with no cache
 rebuild_no_cache() {
     print_header "Rebuilding Containers (No Cache)"
-    docker-compose build --no-cache
+    docker compose build --no-cache
     print_success "Containers rebuilt without cache"
     read -p "Do you want to restart the containers? (y/n): " restart
     if [[ $restart == "y" || $restart == "Y" ]]; then
-        docker-compose up -d
+        docker compose up -d
         print_success "Containers restarted successfully"
     fi
 }
@@ -167,7 +167,7 @@ rebuild_no_cache() {
 # Function to show container status
 show_status() {
     print_header "Container Status"
-    docker-compose ps
+    docker compose ps
 }
 
 # Function to view resource usage
