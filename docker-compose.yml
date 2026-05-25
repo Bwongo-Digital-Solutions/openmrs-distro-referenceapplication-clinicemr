@@ -21,6 +21,11 @@ services:
       timeout: 5s
     depends_on:
       - backend
+    volumes:
+      - ./frontend/config-core_demo.json:/usr/share/nginx/html/config-core_demo.json:ro
+      - ./frontend/logo.svg:/usr/share/nginx/html/logo.svg:ro
+      - ./frontend/logo-white.svg:/usr/share/nginx/html/logo-white.svg:ro
+      - ./frontend/background-image.png:/usr/share/nginx/html/background-image.png:ro
 
   backend:
     image: openmrs/openmrs-reference-application-3-backend:${TAG:-qa}
