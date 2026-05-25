@@ -9,7 +9,9 @@ services:
       - "82:80"
 
   frontend:
-    image: openmrs/openmrs-reference-application-3-frontend:${TAG:-qa}
+    build:
+      context: ./frontend
+    image: clinicemr/frontend:${TAG:-local}
     restart: "unless-stopped"
     environment:
       SPA_PATH: /openmrs/spa
