@@ -154,33 +154,54 @@ copy_static_assets() {
     echo "1) Frontend"
     echo "2) Gateway"
     read -p "Enter choice (1-2): " asset_choice
-    
-    read -p "Enter source path (local): " source_path
-    read -p "Enter destination path (in container): " dest_path
-    
+
     case $asset_choice in
         1)
-            container_name=$(docker compose ps -q frontend | xargs docker inspect -f '{{.Name}}' | sed 's/\///')
-            if [ -n "$container_name" ]; then
-                docker cp "$source_path" "$container_name:$dest_path"
-                print_success "Assets copied to frontend container"
-            else
-                print_error "Frontend container not running"
-            fi
+            echo ""
+            echo "Frontend common destinations:"
+            echo "  /usr/share/nginx/html/          (SPA root)"
+            echo "  /usr/share/nginx/html/openmrs/spa/  (custom assets like logos)"
+            default_dest="/usr/share/nginx/html/"
             ;;
         2)
-            container_name=$(docker compose ps -q gateway | xargs docker inspect -f '{{.Name}}' | sed 's/\///')
-            if [ -n "$container_name" ]; then
-                docker cp "$source_path" "$container_name:$dest_path"
-                print_success "Assets copied to gateway container"
-            else
-                print_error "Gateway container not running"
-            fi
+            echo ""
+            echo "Gateway common destinations:"
+            echo "  /etc/nginx/       (nginx config)"
+            echo "  /usr/share/nginx/html/  (static files)"
+            default_dest="/etc/nginx/"
             ;;
         *)
             print_error "Invalid choice"
+            return
             ;;
     esac
+
+    echo ""
+    read -p "Enter source path (local file or directory): " source_path
+    if [ -z "$source_path" ]; then
+        print_error "Source path cannot be empty"
+        return
+    fi
+    if [ ! -e "$source_path" ]; then
+        print_error "Source path does not exist: $source_path"
+        return
+    fi
+
+    read -p "Enter destination path in container [${default_dest}]: " dest_path
+    dest_path="${dest_path:-$default_dest}"
+
+    container_name=$(docker compose ps -q $([ "$asset_choice" = "1" ] && echo "frontend" || echo "gateway") | xargs docker inspect -f '{{.Name}}' 2>/dev/null | sed 's/\///')
+    if [ -z "$container_name" ]; then
+        print_error "Container not running"
+        return
+    fi
+
+    echo "Copying: $source_path -> $container_name:$dest_path"
+    if docker cp "$source_path" "$container_name:$dest_path"; then
+        print_success "Assets copied successfully to $container_name:$dest_path"
+    else
+        print_error "Failed to copy assets"
+    fi
 }
 
 # Function to rebuild with no cache
