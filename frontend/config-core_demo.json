@@ -74,6 +74,12 @@
       "logo": {
         "src": "/openmrs/spa/logo-white.svg",
         "name": "ClinicEMR"
+      },
+      "externalRefLinks": [
+      {
+        "title": "Contact Developer",
+        "redirect": "https://www.bwongo.site"
       }
+    ]
     }
 }

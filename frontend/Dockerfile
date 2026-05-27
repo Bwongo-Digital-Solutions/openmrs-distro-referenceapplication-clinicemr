@@ -41,5 +41,6 @@ COPY logo.svg /usr/share/nginx/html
 COPY logo-white.svg /usr/share/nginx/html
 COPY background-image.png /usr/share/nginx/html
 COPY bwongo.png /usr/share/nginx/html
+COPY favicon.ico /usr/share/nginx/html/favicon.ico
 
 CMD ["/usr/local/bin/startup.sh"]
