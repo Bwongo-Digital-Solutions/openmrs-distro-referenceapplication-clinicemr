@@ -64,13 +64,17 @@ check_backup_env() {
 
     # Load backup environment variables
     if [ -f ".env" ]; then
-        set -a
-        source .env
-        set +a
+        while IFS='=' read -r key value; do
+            [[ $key =~ ^# ]] && continue
+            [[ -z $key ]] && continue
+            export "$key=$value"
+        done < .env
     elif [ -f ".env.backup" ]; then
-        set -a
-        source .env.backup
-        set +a
+        while IFS='=' read -r key value; do
+            [[ $key =~ ^# ]] && continue
+            [[ -z $key ]] && continue
+            export "$key=$value"
+        done < .env.backup
     fi
 
     if [ -z "$RESTIC_REPOSITORY" ] || [ "$RESTIC_REPOSITORY" = "/path/to/your/backup/repository" ]; then
