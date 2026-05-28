@@ -108,7 +108,7 @@ backup_init() {
     fi
 
     print_status "Initializing backup repository..."
-    $compose_cmd -f docker-compose-backup.yml run --rm backup init
+    $compose_cmd -f docker-compose.yml -f docker-compose-backup.yml run --rm backup init
 
     print_status "Backup repository initialized successfully"
 }
@@ -129,7 +129,7 @@ backup_create() {
     print_status "Repository: $RESTIC_REPOSITORY"
     echo
 
-    $compose_cmd -f docker-compose-backup.yml run --rm backup backup
+    $compose_cmd -f docker-compose.yml -f docker-compose-backup.yml run --rm backup backup
 
     print_status "Backup completed successfully"
 }
@@ -149,7 +149,7 @@ backup_list() {
     print_status "Listing snapshots from: $RESTIC_REPOSITORY"
     echo
 
-    $compose_cmd -f docker-compose-backup.yml run --rm backup snapshots
+    $compose_cmd -f docker-compose.yml -f docker-compose-backup.yml run --rm backup snapshots
 }
 
 # Function to restore from backup
@@ -167,7 +167,7 @@ backup_restore() {
     # List snapshots first
     print_status "Available snapshots:"
     echo
-    $compose_cmd -f docker-compose-backup.yml run --rm backup snapshots
+    $compose_cmd -f docker-compose.yml -f docker-compose-backup.yml run --rm backup snapshots
     echo
 
     read -p "Enter snapshot ID to restore (leave empty for latest): " snapshot_id
