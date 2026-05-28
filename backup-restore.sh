@@ -64,9 +64,13 @@ check_backup_env() {
 
     # Load backup environment variables
     if [ -f ".env" ]; then
-        export $(grep -v '^#' .env | xargs)
+        set -a
+        source .env
+        set +a
     elif [ -f ".env.backup" ]; then
-        export $(grep -v '^#' .env.backup | xargs)
+        set -a
+        source .env.backup
+        set +a
     fi
 
     if [ -z "$RESTIC_REPOSITORY" ] || [ "$RESTIC_REPOSITORY" = "/path/to/your/backup/repository" ]; then
