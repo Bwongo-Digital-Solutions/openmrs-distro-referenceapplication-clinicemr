@@ -20,6 +20,14 @@
     "labOrderTypeUuid": "52a447d3-a64a-11e3-9aeb-50e549534c5e",
     "careSettingUuid": "6f0c9a92-6f24-11e3-af88-005056821db0"
   },
+  "@openmrs/esm-billing-app": {
+    "defaultCurrency": "UGX",
+    "country": "Uganda",
+    "logo": {
+      "src": "/openmrs/spa/logo.svg",
+      "alt": "UG"
+    }
+  },
   "@openmrs/esm-ward-app": {
     "extensionSlots": {
       "action-menu-ward-patient-items-slot": {
