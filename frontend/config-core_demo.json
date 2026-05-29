@@ -24,8 +24,8 @@
     "defaultCurrency": "UGX",
     "country": "Uganda",
     "logo": {
-      "src": "/openmrs/spa/logo.svg",
-      "alt": "UG"
+      "src": "/openmrs/spa/billing-logo.jpg",
+      "alt": "UG" 
     }
   },
   "@openmrs/esm-ward-app": {
