@@ -87,7 +87,14 @@ MAJ="${DEV_BASE%%.*}"; MIN=$(echo "$DEV_BASE" | cut -d. -f2)
 TV="$MAJ.$((MIN-1)).99"    # main initial-cut + resume + promote scenarios
 TV2="$MAJ.$((MIN-1)).98"   # hand-finalized-refusal scenario
 TV3="$MAJ.$((MIN-1)).97"   # base_ref-not-found scenario
-RELEASED=$(git tag -l | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+RELEASED=$(git -C "$ORIGIN" tag -l | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 || true)
+if [ -z "$RELEASED" ]; then
+  RELEASED="$MAJ.$((MIN > 0 ? MIN - 1 : 0)).0"
+  git -C "$ORIGIN" tag "$RELEASED"
+fi
+for t in "$TV" "$TV2" "$TV3"; do
+  git rev-parse -q --verify "refs/tags/$t" >/dev/null && { echo "PRECONDITION FAIL: tag $t exists"; exit 99; }
+done
 for t in "$TV" "$TV2" "$TV3"; do
   git rev-parse -q --verify "refs/tags/$t" >/dev/null && { echo "PRECONDITION FAIL: tag $t exists"; exit 99; }
 done
