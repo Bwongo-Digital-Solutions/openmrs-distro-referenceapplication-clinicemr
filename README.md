@@ -11,28 +11,28 @@ https://dev3.openmrs.org and https://o3.openmrs.org.
 docker compose up
 ```
 
-or to enable SSL,
+The OpenMRS 3.x UI is accessible at http://localhost/openmrs/spa
 
-```bash
-docker compose -f docker-compose.yml -f docker-compose.ssl.yml up
-```
-
-The OpenMRS 3.x UI is accessible at http://localhost/openmrs/spa or https://localhost/openmrs/spa
-
-OpenMRS Legacy UI is accessible at http://localhost/openmrs or https://localhost/openmrs
+OpenMRS Legacy UI is accessible at http://localhost/openmrs
 
 ### Production deployment with SSL
 
-For production deployments with HTTPS/SSL certificates:
+For production deployments with HTTPS/SSL certificates, create a `.env` file in the project root:
 
-```bash
-SSL_MODE=prod \
-CERT_WEB_DOMAINS=your-domain.com \
-CERT_CONTACT_EMAIL=admin@your-domain.com \
-docker compose -f docker-compose.yml -f docker-compose.ssl.yml up
+```env
+COMPOSE_FILE=docker-compose.yml:docker-compose.ssl.yml
+SSL_MODE=prod
+CERT_WEB_DOMAINS=your-domain.com
+CERT_CONTACT_EMAIL=admin@your-domain.com
 ```
 
-See the [SSL/HTTPS Configuration](#sslhttps-configuration) section for detailed setup instructions.
+Then start the application as usual:
+
+```bash
+docker compose up
+```
+
+The `COMPOSE_FILE` variable tells Docker Compose to automatically include the SSL overlay, so you never need to pass `-f` flags. See the [SSL/HTTPS Configuration](#sslhttps-configuration) section for detailed setup instructions.
 
 ## Overview
 
@@ -55,12 +55,25 @@ When running with SSL enabled (using `docker-compose.ssl.yml`), an additional se
 
 The application can be run with SSL/HTTPS support for both development and production environments.
 
+SSL configuration lives in `docker-compose.ssl.yml`, which is included alongside the base `docker-compose.yml`. The recommended way to enable it is via a `.env` file in the project root:
+
+```env
+COMPOSE_FILE=docker-compose.yml:docker-compose.ssl.yml
+```
+
+This tells Docker Compose to automatically include the SSL overlay, so all commands remain simply `docker compose up`, `docker compose down`, etc. without needing `-f` flags. All SSL-related environment variables (like `SSL_MODE` and `CERT_WEB_DOMAINS`) can also be set in this file.
+
 ### Development mode (self-signed certificates)
 
-For local development with HTTPS, simply run with the SSL compose file:
+For local development with HTTPS:
+
+```env
+# .env
+COMPOSE_FILE=docker-compose.yml:docker-compose.ssl.yml
+```
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.ssl.yml up
+docker compose up
 ```
 
 This will:
@@ -76,20 +89,26 @@ The application will be accessible at:
 
 ### Production mode (Let's Encrypt)
 
-For production deployments with valid SSL certificates from Let's Encrypt:
+For production deployments with valid SSL certificates from Let's Encrypt, create a `.env` file:
+
+```env
+# .env
+COMPOSE_FILE=docker-compose.yml:docker-compose.ssl.yml
+SSL_MODE=prod
+CERT_WEB_DOMAINS=example.com
+CERT_CONTACT_EMAIL=admin@example.com
+```
 
 ```bash
-SSL_MODE=prod \
-CERT_WEB_DOMAINS=example.com \
-CERT_CONTACT_EMAIL=admin@example.com \
-docker compose -f docker-compose.yml -f docker-compose.ssl.yml up
+docker compose up
 ```
 
 **Configuration options**:
 
 - `SSL_MODE=prod` - Use Let's Encrypt certificates (required)
-- `CERT_WEB_DOMAINS` - Your domain name(s), comma-separated (e.g., `example.com,www.example.com`)
+- `CERT_WEB_DOMAINS` - Your domain name(s), comma-separated (e.g., `example.com,www.example.com`). The first domain is used as the primary domain for certificate paths and the nginx `server_name` directive.
 - `CERT_CONTACT_EMAIL` - Email for Let's Encrypt notifications
+- `CERT_WEB_DOMAIN_COMMON_NAME` - (Optional) Override the primary domain. By default, this is derived from the first domain in `CERT_WEB_DOMAINS`. You only need to set this if you want the certificate's common name to differ from the first domain.
 - `SSL_STAGING=true` - (Optional) Use Let's Encrypt staging environment for testing
 
 **The certbot container will**:
@@ -103,17 +122,63 @@ docker compose -f docker-compose.yml -f docker-compose.ssl.yml up
 
 ### Testing with Let's Encrypt staging
 
-To test the SSL setup without hitting Let's Encrypt rate limits:
+To test the SSL setup without hitting Let's Encrypt rate limits, add `SSL_STAGING=true` to your `.env` file:
 
-```bash
-SSL_MODE=prod \
-SSL_STAGING=true \
-CERT_WEB_DOMAINS=example.com \
-CERT_CONTACT_EMAIL=admin@example.com \
-docker compose -f docker-compose.yml -f docker-compose.ssl.yml up
+```env
+# .env
+COMPOSE_FILE=docker-compose.yml:docker-compose.ssl.yml
+SSL_MODE=prod
+SSL_STAGING=true
+CERT_WEB_DOMAINS=example.com
+CERT_CONTACT_EMAIL=admin@example.com
 ```
 
-Staging certificates won't be trusted by browsers but allow you to verify the setup works correctly.
+Staging certificates won't be trusted by browsers but allow you to verify the setup works correctly. Remove `SSL_STAGING` (or set it to `false`) once you've confirmed the setup works.
+
+### Certificate profiles
+
+Let's Encrypt offers different certificate profiles with varying validity periods:
+
+| Profile | Validity | Use Case |
+|---------|----------|----------|
+| `classic` | 90 days (default) | Standard certificates |
+| `tlsserver` | 45 days | Shorter validity for improved security |
+| `shortlived` | 6 days | Required for IP address certificates |
+
+To request a specific profile, add `CERT_PROFILE` to your `.env` file:
+
+```env
+# .env (additions)
+CERT_PROFILE=tlsserver
+```
+
+**Note**: Let's Encrypt is transitioning all certificates to 45-day validity by 2028. Using the `tlsserver` profile allows you to opt-in to shorter certificates now.
+
+### IP address certificates
+
+Let's Encrypt now supports issuing certificates for publicly-addressable IP addresses. These certificates must use the `shortlived` profile (6-day validity).
+
+```env
+# .env
+COMPOSE_FILE=docker-compose.yml:docker-compose.ssl.yml
+SSL_MODE=prod
+CERT_WEB_DOMAINS=203.0.113.50
+CERT_CONTACT_EMAIL=admin@example.com
+```
+
+**Important notes for IP address certificates**:
+- The IP address must be publicly addressable (not private IPs like 192.168.x.x or 10.x.x.x)
+- The `shortlived` profile is automatically selected when an IP address is detected
+- Certificates are valid for approximately 6 days and renew automatically
+- IPv6 addresses are also supported
+
+You can also mix domain names and IP addresses:
+
+```env
+CERT_WEB_DOMAINS=example.com,203.0.113.50
+```
+
+When any IP address is included, the shortlived profile is required and will be automatically enforced.
 
 ### Manual certificate renewal
 
@@ -123,50 +188,131 @@ While certificates renew automatically in production mode, you can manually forc
 
 ```bash
 # Force renewal
-docker compose -f docker-compose.yml -f docker-compose.ssl.yml exec certbot \
-  certbot renew --force-renewal --webroot -w /var/www/certbot
+docker compose exec certbot certbot renew --force-renewal --webroot -w /var/www/certbot
 
 # Reload nginx to pick up new certificates
-docker compose -f docker-compose.yml -f docker-compose.ssl.yml exec gateway \
-  nginx -s reload
+docker compose exec gateway nginx -s reload
 ```
 
 **If certbot container has stopped or for one-off renewal**:
 
 ```bash
 # Run certbot in one-off mode (override entrypoint to run certbot directly)
-docker compose -f docker-compose.yml -f docker-compose.ssl.yml run --rm \
-  --entrypoint certbot certbot \
+docker compose run --rm --entrypoint certbot certbot \
   renew --force-renewal --webroot -w /var/www/certbot
 
 # Reload nginx
-docker compose -f docker-compose.yml -f docker-compose.ssl.yml exec gateway \
-  nginx -s reload
+docker compose exec gateway nginx -s reload
 ```
 
 **Check certificate expiration**:
 
 ```bash
 # If certbot container is running
-docker compose -f docker-compose.yml -f docker-compose.ssl.yml exec certbot \
-  certbot certificates
+docker compose exec certbot certbot certificates
 
 # If certbot container is stopped
-docker compose -f docker-compose.yml -f docker-compose.ssl.yml run --rm \
-  --entrypoint certbot certbot \
-  certificates
+docker compose run --rm --entrypoint certbot certbot certificates
 ```
 
+### Regenerating certificates
+
+If you need to start fresh with certificates (e.g., after changing domains), delete the letsencrypt volume and restart:
+
+```bash
+docker compose down
+
+# Remove only this project's letsencrypt volume
+docker volume rm "$(docker compose config | awk '/^name:/{print $2}')_letsencrypt-data"
+
+docker compose up
+```
+
+The certbot entrypoint skips certificate generation when it finds existing certificates for the configured domain. Removing the volume forces it to go through the full setup process again.
+
+### Running with Grafana
+
+The distro ships an optional monitoring stack -- Grafana, Prometheus, Loki, Alloy and
+blackbox-exporter -- which collects container logs, HTTP endpoint probes and JVM metrics
+from the OpenMRS backend. Run it with:
+```bash
+docker compose -f docker-compose.yml -f docker-compose.monitoring-bundled.yml up
+```
+Grafana will be available at http://localhost/grafana. Use admin as username and see docker-compose.monitoring-bundled.yml for the initial password.
+
+Three dashboards are provisioned automatically:
+
+| Dashboard | Data source | Shows |
+|-----------|-------------|-------|
+| Logs (home) | Loki | Container logs, filterable by service, level and free text |
+| JVM Runtime | Prometheus | Backend heap, GC, threads, loaded classes and CPU |
+| Endpoint health check | Prometheus | Availability and latency of probed HTTP endpoints |
+
+If you would like to use grafana in your distro, you just need to copy over `docker-compose.monitoring-bundled.yml`.
+
+Note that this is a single-node example: Prometheus, Loki and Grafana each store data in a
+local volume. For production or multi-replica deployments, reuse the configuration pattern
+shown here rather than the compose file itself.
+
+### Backend metrics (OpenTelemetry)
+
+JVM metrics come from the OpenTelemetry Java agent, which is bundled in the `openmrs-core`
+base image (downloaded and checksum-verified in that image's Dockerfile). Setting
+`OMRS_OTEL_ENABLED=true` makes the backend's startup script attach the agent to Tomcat.
+
+The path is: Java agent -> OTLP/HTTP -> Alloy -> Prometheus -> Grafana.
+
+Because the agent auto-instruments the whole web application, it exports HTTP server and
+JDBC client metrics in addition to the `jvm.*` family. The provisioned dashboard plots the
+JVM metrics only; anything else the agent sends is still queryable in Prometheus.
+
+#### Prometheus labels
+
+Alloy converts OTLP resource attributes into Prometheus labels:
+
+- `service.name` becomes the `job` label
+- `service.namespace`, if set, prefixes it as `job="<namespace>/<name>"`
+- `service.instance.id`, if set, becomes the `instance` label
+- all other resource attributes land on the `target_info` metric, reachable with a
+  `group_left` join on `(job, instance)`
+
+This stack sets only `OTEL_SERVICE_NAME`, so the JVM dashboard filters on
+`job="openmrs-backend"` alone. **If you run more than one backend replica, give each a
+unique `service.instance.id`** via `OTEL_RESOURCE_ATTRIBUTES` -- otherwise every replica
+writes to the same series and Prometheus rejects the duplicate samples.
+
+Metric names follow OpenTelemetry semantic conventions and are translated to Prometheus
+naming by Alloy, so upgrading the agent version in `openmrs-core` can rename series and
+require dashboard updates.
+
 ### Environment variables reference
+
+#### SSL/certificates
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `SSL_MODE` | `dev` | `dev` for self-signed certificates, `prod` for Let's Encrypt |
 | `SSL_STAGING` | `false` | Use Let's Encrypt staging environment (set to `true` for testing) |
-| `CERT_WEB_DOMAINS` | `localhost,127.0.0.1` | Comma-separated list of domain names |
-| `CERT_WEB_DOMAIN_COMMON_NAME` | (first domain) | Override the primary domain name |
+| `CERT_WEB_DOMAINS` | `localhost,127.0.0.1` | Comma-separated list of domain names or IP addresses |
+| `CERT_WEB_DOMAIN_COMMON_NAME` | first domain from `CERT_WEB_DOMAINS` | Override the primary domain used for certificate paths and nginx `server_name`. Most users should not set this. |
 | `CERT_CONTACT_EMAIL` | (empty) | Email for Let's Encrypt notifications (required in prod mode) |
 | `CERT_RSA_KEY_SIZE` | `4096` | RSA key size for certificates |
+| `CERT_PROFILE` | (empty) | Certificate profile: `classic` (90 days), `tlsserver` (45 days), or `shortlived` (6 days). Auto-set to `shortlived` for IP addresses |
+
+#### Monitoring
+
+
+| Variable | Default | Overlay | Description |
+|----------|---------|---------|-------------|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://alloy:4318` | m, g | Where the backend's OpenTelemetry agent sends OTLP data. Point this elsewhere if you run your own collector instead of the bundled Alloy |
+| `OTEL_SERVICE_NAME` | `openmrs-backend` | m, g | Becomes the Prometheus `job` label. Change it if you run more than one backend and need to tell them apart in dashboards |
+| `OTEL_RESOURCE_ATTRIBUTES` | (unset) | m, g | Extra resource attributes attached to every metric, e.g. `service.instance.id=backend-0,deployment.environment.name=prod` |
+| `OTEL_JMX_TARGET_SYSTEM` | (unset) | m, g | Collect JMX metrics for a known system, e.g. `tomcat` |
+| `ALLOY_OTLP_ENDPOINT` | (empty) | m | Upstream OTLP endpoint Alloy forwards metrics to, e.g. a Grafana Cloud or other vendor endpoint. Required: `monitoring-init` fails if it is unset. The format depends on `ALLOY_OTLP_PROTOCOL`: with `http`, the base URL including the scheme and without the `/v1/metrics` suffix the exporter appends itself, e.g. `https://otlp-gateway-prod-eu-west-2.grafana.net/otlp`; with `grpc`, `host:port` with no path, e.g. `collector.example.org:4317` |
+| `ALLOY_OTLP_PROTOCOL` | `http` | m | Protocol used for that upstream export. Valid values: `grpc`, `http` |
+| `ALLOY_OTLP_HEADERS` | (empty) | m | Headers sent with the upstream export, typically authentication. A JSON object, e.g. `{"Authorization":"Basic <base64>"}` |
+| `ALLOY_OTLP_INSECURE` | `false` | m | Set to `true` to skip TLS when talking to the upstream endpoint |
+| `GRAFANA_ADMIN_PASSWORD` | `Admin123` | g | Password for Grafana's `admin` user. Change this before exposing Grafana |
 
 ## Contributing to the configuration
 
@@ -193,66 +339,3 @@ those that should be part of the core package. For example, a form named `test_f
 Frontend configuration can be found in `frontend/config-core_demo.json`.
 
 Thanks!
-
-Offline or Air-Gapped Installations
-
-In situations where the instance running the project is not connected to the internet we provide pre-packaged images which can be loaded on the instance. To obtain the image check under the Releases section and download the path-drc-emr-images-bundle.tgz file.
-
-To load the images on the instance, extract the path-drc-emr-images-bundle.tgz file and run the following script:
-
-./load-images.sh
-
-Backup and Restore
-
-This project provides out-of-the-box backup and restore functionality for your OpenMRS deployment, powered by the robust Restic tool. This enables you to back up and restore your application data using a wide variety of storage backends supported by Restic, such as local disk, S3, Azure, Google Cloud Storage, and more.
-How It Works
-
-    Backup and restore are managed by dedicated Docker Compose services using the mekomsolutions/restic-compose-backup and mekomsolutions/restic-compose-backup-restore images.
-    The backup service periodically snapshots your data volumes and database, storing them in your configured Restic repository.
-    The restore service can be used to recover your data from a specific snapshot.
-
-Configuration
-Environment Variables
-
-You can configure backup and restore behavior using the following environment variables in your .env file or directly in your Compose files:
-Variable 	Description
-RESTIC_REPOSITORY 	The Restic repository URL (e.g., local path, s3, etc.)
-RESTIC_PASSWORD 	Password for the Restic repository
-RESTIC_KEEP_DAILY 	Number of daily snapshots to keep
-RESTIC_KEEP_WEEKLY 	Number of weekly snapshots to keep
-RESTIC_KEEP_MONTHLY 	Number of monthly snapshots to keep
-RESTIC_KEEP_YEARLY 	Number of yearly snapshots to keep
-LOG_LEVEL 	Log verbosity (e.g., info, debug)
-CRON_SCHEDULE 	Cron schedule for automatic backups (e.g., 0 2 * * * for daily at 2am)
-RESTIC_RESTORE_SNAPSHOT 	(Restore only) The snapshot ID or tag to restore
-BACKUP_PATH 	Local directory for storing backup repository (default: ./backup)
-Volumes and Labels
-
-    The backend and db services are labeled and configured to include their data volumes in the backup.
-    Additional volumes (e.g., for configuration checksums, person images, complex obs) are also included and labeled for backup.
-
-Usage
-Restore
-
-To restore from a backup:
-
-    Set the BACKUP_PATH, RESTIC_PASSWORD, and RESTIC_RESTORE_SNAPSHOT environment variables.
-    Start the restore service:
-
-docker compose -f docker-compose.yml -f docker-compose-restore.yml up -d
-
-This will restore the specified snapshot to the appropriate volumes. The backend and db services are configured to wait for the restore to complete before starting.
-
-IMPORTANT
-
-The restore process will leave a restore container that will block the backup process. To clean up the restore container, run the following command:
-
-docker compose -f docker-compose.yml -f docker-compose-restore.yml rm restore
-docker compose -f docker-compose.yml -f docker-compose-restore.yml exec backup restic unlock -v
-
-References
-
-    Restic Documentation
-    mekomsolutions/restic-compose-backup
-
-

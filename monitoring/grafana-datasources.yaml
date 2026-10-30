@@ -1,0 +1,39 @@
+#
+#  This Source Code Form is subject to the terms of the Mozilla Public License,
+#  v. 2.0. If a copy of the MPL was not distributed with this file, You can
+#  obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+#  the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
+#
+#  Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+#  graphic logo is a trademark of OpenMRS Inc.
+#
+apiVersion: 1
+
+# Datasources are recreated on every start. Needed because the uids below were
+# pinned after the fact: Grafana cannot change the uid of a datasource it has
+# already provisioned, so the old record has to go first.
+deleteDatasources:
+  - name: Loki
+    orgId: 1
+  - name: Prometheus
+    orgId: 1
+
+datasources:
+  - name: Loki
+    type: loki
+    # Pinned: dashboards reference datasources by uid. Without this Grafana
+    # generates one (e.g. PBFA97CFB590B2093) and those references dangle.
+    uid: Loki
+    access: proxy
+    url: http://loki:3100
+    jsonData:
+      maxLines: 1000
+
+  - name: Prometheus
+    type: prometheus
+    uid: Prometheus
+    access: proxy
+    url: http://prometheus:9090
+    jsonData:
+      httpMethod: POST
+      prometheusType: Prometheus

@@ -13,19 +13,14 @@ COPY spa-assemble-config.json .
 COPY spa-build-config.json .
 
 ARG CACHE_BUST
-RUN mkdir -p configuration
-COPY ./configuration/*.json configuration
-RUN npx --legacy-peer-deps openmrs@${APP_SHELL_VERSION:-next} assemble --manifest --mode config --config spa-assemble-config.json --config-file configuration/*.json --target ./spa
+RUN npx --legacy-peer-deps openmrs@${APP_SHELL_VERSION:-next} assemble --manifest --mode config --config spa-assemble-config.json --target ./spa
 RUN npx --legacy-peer-deps openmrs@${APP_SHELL_VERSION:-next} build --build-config spa-build-config.json --target ./spa
-
-# RUN npx --legacy-peer-deps openmrs@${APP_SHELL_VERSION:-next} assemble --manifest --mode config --config spa-assemble-config.json --target ./spa
-# RUN npx --legacy-peer-deps openmrs@${APP_SHELL_VERSION:-next} build --build-config spa-build-config.json --target ./spa
 RUN if [ ! -f ./spa/index.html ]; then echo 'Build failed. Please check the logs above for details. This may have happened because of an update to a library that OpenMRS depends on.'; exit 1; fi
 
 #--------------------------------------------
 # Runtime Stage - Published Image
 #--------------------------------------------
-FROM nginx:1.25-alpine
+FROM nginx:1.31-alpine
 
 RUN apk update && \
     apk upgrade && \
@@ -42,9 +37,5 @@ COPY nginx.conf /etc/nginx/nginx.conf
 
 COPY --from=dev /app/spa /usr/share/nginx/html
 COPY config-core_demo.json /usr/share/nginx/html
-
-# Copy custom logo if it exists (place your logo.png in frontend/assets/)
-COPY assets/ /usr/share/nginx/html/
-COPY assets/ /usr/share/nginx/html/assets
 
 CMD ["/usr/local/bin/startup.sh"]
